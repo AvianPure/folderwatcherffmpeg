@@ -5,14 +5,14 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System.Drawing;
-using MS.WindowsAPICodePack.Internal;
-using static System.Net.WebRequestMethods;
+using System.Text.RegularExpressions;
 
 
 namespace folderwatcherffmpeg
 {
     public partial class MainForm : Form
     {
+        bool loadSucces = true;
         public MainForm()
         {
             InitializeComponent();
@@ -28,6 +28,7 @@ namespace folderwatcherffmpeg
 
         private static string Execute(string exePath, string parameters)
         {
+
             string result = String.Empty;
 
             using (Process p = new Process())
@@ -44,6 +45,8 @@ namespace folderwatcherffmpeg
             }
 
             return result;
+            
+
         }
 
         int time = 3540;//3540;
@@ -66,31 +69,52 @@ namespace folderwatcherffmpeg
         {
             if (timer1.Enabled)
             {
-                timer1.Enabled = false;
-                Hours.ReadOnly = false;
-                minutes.ReadOnly = false;
-                seconds.ReadOnly = false;
-                StartBtn.Text = "Start Watching";
+                timerStop();
             }
             else
             {
-                Timer.Text = "Loading";
-                time = (int)Hours.Value * 3600 + (int)minutes.Value * 60 + (int)seconds.Value;
-                timer1.Enabled = true;
-                Hours.ReadOnly = true;
-                minutes.ReadOnly = true;
-                seconds.ReadOnly = true;
-                StartBtn.Text = "Stop Watching";
+                timerStart();
             }
             
+        }
+
+        private void timerStart()
+        {
+
+            Timer.Text = "Loading";
+            time = (int)Hours.Value * 3600 + (int)minutes.Value * 60 + (int)seconds.Value;
+            timer1.Enabled = true;
+            Hours.ReadOnly = true;
+            minutes.ReadOnly = true;
+            seconds.ReadOnly = true;
+            StartBtn.Text = "Stop Watching";
+
+        }
+
+        private void timerStop()
+        {
+
+            Timer.Text = "00:00:00";
+            timer1.Enabled = false;
+            Hours.ReadOnly = false;
+            minutes.ReadOnly = false;
+            seconds.ReadOnly = false;
+            StartBtn.Text = "Start Watching";
+
         }
 
         private void fileCheck()
         {
             int result = 0;
-            if (ffmpegpath.Text == "..." && WatchPath.Text == "..." && BackUpPath.Text == "..." && OutputPath.Text == "...")
+            if (ffmpegpath.Text == "..." || WatchPath.Text == "..." || BackUpPath.Text == "..." || OutputPath.Text == "...")
             {
                 MessageBox.Show("Please ensure all settings have valid paths before proceeding.");
+                logFailed("Please ensure all settings have valid paths before proceeding.\n");
+                return;
+            }else if (ffmpegpath.Text == "" || WatchPath.Text == "" || BackUpPath.Text == "" || OutputPath.Text == "")
+            {
+                MessageBox.Show("Please ensure all settings have valid paths before proceeding.");
+                logFailed("Please ensure all settings have valid paths before proceeding.\n");
                 return;
             }
             Log.AppendText($"New run at: {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\n");
@@ -116,13 +140,13 @@ namespace folderwatcherffmpeg
                         bool dublicateSafe = true;
 
                         string path = OutputPath.Text;
-                        string filename = Path.GetFileNameWithoutExtension(file);
+                        string filename = System.IO.Path.GetFileNameWithoutExtension(file);
                         string extension = SelectedFileType.ToLower();
-                        string outputFile = Path.Combine(path, $"{filename}{CurrentSuffix.Text}.{extension}");
+                        string outputFile = System.IO.Path.Combine(path, $"{filename}{CurrentSuffix.Text}.{extension}");
 
-                        string oldFileExtension = Path.GetExtension(file);
+                        string oldFileExtension = System.IO.Path.GetExtension(file);
                         string backUpPath = BackUpPath.Text;
-                        string backupFile = Path.Combine(backUpPath, $"{filename}{CurrentSuffix.Text}.{oldFileExtension}");
+                        string backupFile = System.IO.Path.Combine(backUpPath, $"{filename}{CurrentSuffix.Text}{oldFileExtension}");
 
 
                         if (DubCheck.Checked == true)
@@ -130,11 +154,11 @@ namespace folderwatcherffmpeg
                             string dubprotection = GenerateRandomString(10);
                             if (System.IO.File.Exists(outputFile))
                             {
-                               outputFile = Path.Combine(path, $"{filename}{CurrentSuffix.Text}{dubprotection}.{extension}");
+                               outputFile = System.IO.Path.Combine(path, $"{filename}{CurrentSuffix.Text}{dubprotection}.{extension}");
                             }
                             if (System.IO.File.Exists(backupFile))
                             {
-                                backupFile = Path.Combine(backUpPath, $"{filename}{CurrentSuffix.Text}{dubprotection}.{oldFileExtension}");
+                                backupFile = System.IO.Path.Combine(backUpPath, $"{filename}{CurrentSuffix.Text}{dubprotection}{oldFileExtension}");
                             }
                         }
 
@@ -145,7 +169,22 @@ namespace folderwatcherffmpeg
                         }
                         else
                         {
-                            Execute(ffmpegpath.Text, $"-y -i \"{file}\" -preset ultrafast \"{outputFile}\"");
+
+                            if (ffmpegpath.Text.Contains("ffmpeg.exe") && ffmpegpath.Text.Substring(ffmpegpath.Text.LastIndexOf('\\') + 1) == "ffmpeg.exe")
+                            {
+                                Execute(ffmpegpath.Text, $"-y -i \"{file}\" -preset ultrafast \"{outputFile}\"");
+
+                            }
+                            else
+                            {
+                                logFailed("ffmpeg not found.\n");
+                                progressBar1.Value = progressBar1.Maximum;
+                                progressBar1.ForeColor = Color.Red;
+                                progressBar1.BackColor = Color.Red;
+                                dublicateSafe = true;
+                                break;
+                            }
+                                
                         }
 
 
@@ -216,7 +255,6 @@ namespace folderwatcherffmpeg
                         ffmpegpath.Text = file;
                         foundmmpeg = true;
                     }
-                    Console.WriteLine($"{file}");
                 }
                 if(foundmmpeg== false)
                 {
@@ -242,7 +280,7 @@ namespace folderwatcherffmpeg
         private void SaveBTN_Click(object sender, EventArgs e)
         {
             string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
-            string newFolderPath = Path.Combine(runPath, "Settings");
+            string newFolderPath = System.IO.Path.Combine(runPath, "Settings");
 
             // Check if the directory exists
             if (!Directory.Exists(newFolderPath))
@@ -251,14 +289,14 @@ namespace folderwatcherffmpeg
                 Directory.CreateDirectory(newFolderPath);
             }
 
-            string newFilePath = Path.Combine(newFolderPath, "Settings.txt");
+            string newFilePath = System.IO.Path.Combine(newFolderPath, "Settings.txt");
 
-            // Create a new text file with three lines of content
-            string content = $"ffmpeg:{ffmpegpath.Text}\nwatch:{WatchPath.Text}\ndefault:{SelectedFileType}\noutput:{OutputPath.Text}\nbackup:{BackUpPath.Text}\noutput:{OutputPath.Text}\nhour:{Hours.Value}\nminute:{minutes.Value}\nseconds:{seconds.Value}\nonboot:{StartOnBoot.Checked}\nsuffix:{Currentsuffixlabel.Text}\ndubprotection:{DubCheck.Checked}";
-            System.IO.File.WriteAllText(newFilePath, content);
-            Log.AppendText($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\nSettings saved\n" );
+            string content = $"ffmpeg:{ffmpegpath.Text}\nwatch:{WatchPath.Text}\ndefault:{SelectedFileType}\noutput:{OutputPath.Text}\nbackup:{BackUpPath.Text}\noutput:{OutputPath.Text}\nhour:{Hours.Value}\nminute:{minutes.Value}\nseconds:{seconds.Value}\nonboot:{StartOnBoot.Checked}\nsuffix:{CurrentSuffix.Text}\ndubprotection:{DubCheck.Checked}\n";
+            string SelectedTypesCollection = $"filetypes:{string.Join(",", SelectedFileTypes.CheckedItems.Cast<string>())}\n";
+            System.IO.File.WriteAllText(newFilePath, $"{content}{SelectedTypesCollection}");
+            logSucces($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\nSettings saved\n" );
         }
-
+            
         private void LoadBtn_Click(object sender, EventArgs e)
         {
             LoadSettings();
@@ -267,8 +305,8 @@ namespace folderwatcherffmpeg
         private void LoadSettings()
         {
             string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
-            string newFolderPath = Path.Combine(runPath, "Settings");
-            string newFilePath = Path.Combine(newFolderPath, "Settings.txt");
+            string newFolderPath = System.IO.Path.Combine(runPath, "Settings");
+            string newFilePath = System.IO.Path.Combine(newFolderPath, "Settings.txt");
             bool runcheck = true;
 
             if (!Directory.Exists(newFolderPath))
@@ -290,17 +328,18 @@ namespace folderwatcherffmpeg
                     switch (line)
                     {
                         case var _ when line.Contains("ffmpeg:"):
-                            ffmpegpath.Text = line.Substring(line.IndexOf(':') + 1);
+                            ffmpegpath.Text = pathValidation(line.Substring(line.IndexOf(':') + 1));
                             break;
                         case var _ when line.Contains("suffix:"):
-                            CurrentSuffix.Text = line.Substring(line.IndexOf(':') + 1);
+                            CurrentSuffix.Text = CleanPath(line.Substring(line.IndexOf(':') + 1));
+                            PrefixTXT.Text = CleanPath(line.Substring(line.IndexOf(':') + 1));
                             break;
                         case var _ when line.Contains("dubprotection:"):
                             bool isDubProtectionEnabled = line.Substring(line.IndexOf(':') + 1).Equals("True", StringComparison.OrdinalIgnoreCase);
                             DubCheck.Checked = isDubProtectionEnabled;
                             break;
                         case var _ when line.Contains("watch:"):
-                            WatchPath.Text = line.Substring(line.IndexOf(':') + 1);
+                            WatchPath.Text = pathValidation(line.Substring(line.IndexOf(':') + 1));
                             break;
                         case var _ when line.Contains("default:"):
                             SelectedFileType = line.Substring(line.IndexOf(':') + 1);
@@ -317,10 +356,10 @@ namespace folderwatcherffmpeg
                             }
                             break;
                         case var _ when line.Contains("backup:"):
-                            BackUpPath.Text = line.Substring(line.IndexOf(':') + 1);
+                            BackUpPath.Text = pathValidation(line.Substring(line.IndexOf(':') + 1));
                             break;
                         case var _ when line.Contains("output:"):
-                            OutputPath.Text = line.Substring(line.IndexOf(':') + 1);
+                            OutputPath.Text = pathValidation(line.Substring(line.IndexOf(':') + 1));
                             break;
                         case var _ when line.Contains("hour:"):
                             Hours.Value = Int32.Parse(line.Substring(line.IndexOf(':') + 1));
@@ -335,11 +374,30 @@ namespace folderwatcherffmpeg
                             if (line.Substring(line.IndexOf(':') + 1) == "True")
                             {
                                 StartOnBoot.Checked = true;
-                                StartBtn_Click(this, null);
+                                timerStart();
                             }
                             else
                             {
                                 StartOnBoot.Checked = false;
+                            }
+                            break;
+                        case var _ when line.Contains("filetypes:"):
+                            string fileTypesFromTextFile = line.Substring(line.IndexOf(':') + 1);
+                            string[] fileTypes = fileTypesFromTextFile.Split(',');
+                            for (int i = 0; i < SelectedFileTypes.Items.Count; i++)
+                            {
+                                SelectedFileTypes.SetItemChecked(i, false);
+                            }
+                            foreach (string fileType in fileTypes)
+                            {
+                                for (int i = 0; i < SelectedFileTypes.Items.Count; i++)
+                                {
+                                    if (SelectedFileTypes.Items[i].ToString() == fileType)
+                                    {
+                                        SelectedFileTypes.SetItemChecked(i, true);
+                                        break; // Exit the loop once a match is found
+                                    }
+                                }
                             }
                             break;
                         default:
@@ -351,6 +409,8 @@ namespace folderwatcherffmpeg
             Log.AppendText($"Started {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\n");
             if (!runcheck)
                 logFailed("No settings found.\n");
+            else if(!loadSucces)
+                logFailed("Some settings failed to load.\n");
             else
                 logSucces("Settings Loaded.\n");
         }
@@ -407,9 +467,16 @@ namespace folderwatcherffmpeg
         }
         private void Defaults_Click(object sender, EventArgs e)
         {
+            CurrentSuffix.Text = "";
+            PrefixTXT.Text = "";
+            timerStop();
+            StartOnBoot.Checked = false;
             string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
             bool foundmmpeg = false;
-
+            for (int i = 0; i < SelectedFileTypes.Items.Count; i++)
+            {
+                SelectedFileTypes.SetItemChecked(i, false);
+            }
             string[] files = Directory.GetFiles(runPath);
             foreach (string file in files)
             {
@@ -423,9 +490,11 @@ namespace folderwatcherffmpeg
             if (foundmmpeg == false)
             {
                 MessageBox.Show("Error ffmpeg not found");
+                logFailed("Error ffmpeg not found\n");
+                ffmpegpath.Text = "";
             }
 
-            string newFolderPath = Path.Combine(runPath, "backup");
+            string newFolderPath = System.IO.Path.Combine(runPath, "backup");
             if (!Directory.Exists(newFolderPath))
             {
                 // If it doesn't exist, create it
@@ -433,7 +502,7 @@ namespace folderwatcherffmpeg
             }
             BackUpPath.Text = newFolderPath;
 
-            newFolderPath = Path.Combine(runPath, "sampledata");
+            newFolderPath = System.IO.Path.Combine(runPath, "sampledata");
             if (!Directory.Exists(newFolderPath))
             {
                 // If it doesn't exist, create it
@@ -441,13 +510,15 @@ namespace folderwatcherffmpeg
             }
             WatchPath.Text = newFolderPath;
 
-            newFolderPath = Path.Combine(runPath, "output");
+            newFolderPath = System.IO.Path.Combine(runPath, "output");
             if (!Directory.Exists(newFolderPath))
             {
                 // If it doesn't exist, create it
                 Directory.CreateDirectory(newFolderPath);
             }
             OutputPath.Text = newFolderPath;
+
+            logSucces("Succesfully reseted settings to default\n");
 
         }
 
@@ -460,13 +531,45 @@ namespace folderwatcherffmpeg
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
             Random random = new Random();
-            return new string(Enumerable.Repeat(chars, length)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
+            return CleanPath(new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray()));
+        }
+
+        public static string CleanPath(string inputPath)
+        {
+            // Remove invalid characters from the input path
+            string cleanedPath = string.Concat(inputPath.Split(System.IO.Path.GetInvalidFileNameChars()));
+
+            // Replace any remaining invalid characters with underscores
+            cleanedPath = Regex.Replace(cleanedPath, @"[^\w\d\s-]", "_");
+
+            return cleanedPath;
         }
 
         private void SetSuffixBtn_Click(object sender, EventArgs e)
         {
-            CurrentSuffix.Text = PrefixTXT.Text;
+            CurrentSuffix.Text = CleanPath(PrefixTXT.Text);
+        }
+
+        private string pathValidation(string path)
+        {
+            try
+            {
+                string inputPath = path; // Replace with your path
+                string fullPath = System.IO.Path.GetFullPath(inputPath);
+                if (!Directory.Exists(fullPath))
+                {
+                    throw new DirectoryNotFoundException("Path does not currently excists");
+                }
+                path = fullPath;
+            }
+            catch (Exception ex)
+            {
+                logFailed($"Invalid path {path}: {ex.Message}\n");
+                loadSucces = false;
+                path = "";
+            }
+
+            return path;
         }
         //E:\ffmpeg-2024-02-15-git-a2cfd6062c-essentials_build\bin\ffmpeg.exe -i input.avif -preset ultrafast output.jpg
     }

@@ -91,7 +91,9 @@
             this.SelectedFileTypes.CheckOnClick = true;
             this.SelectedFileTypes.FormattingEnabled = true;
             this.SelectedFileTypes.Items.AddRange(new object[] {
-            "Avif"});
+            "Avif",
+            "PNG",
+            "JPG"});
             this.SelectedFileTypes.Location = new System.Drawing.Point(15, 211);
             this.SelectedFileTypes.Name = "SelectedFileTypes";
             this.SelectedFileTypes.Size = new System.Drawing.Size(120, 34);
@@ -100,6 +102,7 @@
             // 
             // progressBar1
             // 
+            this.progressBar1.ForeColor = System.Drawing.Color.Turquoise;
             this.progressBar1.Location = new System.Drawing.Point(13, 415);
             this.progressBar1.Name = "progressBar1";
             this.progressBar1.Size = new System.Drawing.Size(810, 23);
