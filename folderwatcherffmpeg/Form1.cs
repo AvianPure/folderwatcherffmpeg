@@ -6,6 +6,7 @@ using System.Diagnostics;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System.Drawing;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 
 namespace folderwatcherffmpeg
@@ -105,7 +106,14 @@ namespace folderwatcherffmpeg
 
         private void fileCheck()
         {
+
+
             int result = 0;
+            List<string> errorLog = new List<string>();
+            errorLog.Clear();
+            int errorcode = 0;
+
+            //failsafe
             if (ffmpegpath.Text == "..." || WatchPath.Text == "..." || BackUpPath.Text == "..." || OutputPath.Text == "...")
             {
                 MessageBox.Show("Please ensure all settings have valid paths before proceeding.");
@@ -117,104 +125,154 @@ namespace folderwatcherffmpeg
                 logFailed("Please ensure all settings have valid paths before proceeding.\n");
                 return;
             }
+
             Log.AppendText($"New run at: {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\n");
+
             string[] files = Directory.GetFiles(WatchPath.Text);
-            foreach (var item in SelectedFileTypes.CheckedItems)
+
+            // Get the selected file types
+            var selectedExtensions = SelectedFileTypes.CheckedItems.Cast<string>().Select(ext => ext.StartsWith(".") ? ext.ToLower() : "." + ext.ToLower()).ToList();
+
+            // Filter the files
+            var filteredFiles = files.Where(file => selectedExtensions.Contains(Path.GetExtension(file).ToLower())).ToArray();
+
+            // The rest of the files
+            // var otherFiles = files.Except(filteredFiles).ToArray();
+            logSucces($"Checking for items in path {System.IO.Path.GetFullPath(WatchPath.Text)}. Found {filteredFiles.Count()} files.\n");
+            if (filteredFiles.Count() > 0)
             {
+                progressBar1.Maximum = filteredFiles.Count();
+                progressBar1.Value = 1;
+                progressBar1.Step = 1;
+                progressBar1.Minimum = 1;
+            }
 
-                Console.WriteLine("Checking for " + item + " items in path " + WatchPath.Text);
 
-                if (files.Count() > 0)
+
+            foreach (var item in filteredFiles)
+            {
+                errorcode = 0;
+                logSucces($"Working on {System.IO.Path.GetFileName(item)}\n");
+
+                CurrentFileLabel.Text = item;
+                bool dublicateSafe = true;
+                bool readyToMove = true;
+
+
+                //pathing
+                string path = OutputPath.Text;
+                string filename = System.IO.Path.GetFileNameWithoutExtension(item);
+                string extension = SelectedFileType.ToLower();
+                string outputFile = System.IO.Path.Combine(path, $"{filename}{CurrentSuffix.Text}.{extension}");
+
+                string oldFileExtension = System.IO.Path.GetExtension(item);
+                string backUpPath = BackUpPath.Text;
+                string backupFile = System.IO.Path.Combine(backUpPath, $"{filename}{CurrentSuffix.Text}{oldFileExtension}");
+
+
+                if (DubCheck.Checked == true)
                 {
-                    progressBar1.Maximum = files.Count();
-                    progressBar1.Value = 1;
-                    progressBar1.Step = 1;
-                    progressBar1.Minimum = 1;
-                }
-
-                foreach (var file in files)
-                {
-                    CurrentFileLabel.Text = file;
-                    if (file.ToLower().Contains("." + item.ToString().ToLower()))
+                    string dubprotection = GenerateRandomString(10);
+                    if (System.IO.File.Exists(outputFile))
                     {
-                        bool dublicateSafe = true;
-
-                        string path = OutputPath.Text;
-                        string filename = System.IO.Path.GetFileNameWithoutExtension(file);
-                        string extension = SelectedFileType.ToLower();
-                        string outputFile = System.IO.Path.Combine(path, $"{filename}{CurrentSuffix.Text}.{extension}");
-
-                        string oldFileExtension = System.IO.Path.GetExtension(file);
-                        string backUpPath = BackUpPath.Text;
-                        string backupFile = System.IO.Path.Combine(backUpPath, $"{filename}{CurrentSuffix.Text}{oldFileExtension}");
-
-
-                        if (DubCheck.Checked == true)
-                        {
-                            string dubprotection = GenerateRandomString(10);
-                            if (System.IO.File.Exists(outputFile))
-                            {
-                               outputFile = System.IO.Path.Combine(path, $"{filename}{CurrentSuffix.Text}{dubprotection}.{extension}");
-                            }
-                            if (System.IO.File.Exists(backupFile))
-                            {
-                                backupFile = System.IO.Path.Combine(backUpPath, $"{filename}{CurrentSuffix.Text}{dubprotection}{oldFileExtension}");
-                            }
-                        }
-
-                        if (System.IO.File.Exists(outputFile))
-                        {
-                            logFailed($"Couldn't convert: {file} Already exists\n");
-                            dublicateSafe = false;
-                        }
-                        else
-                        {
-
-                            if (ffmpegpath.Text.Contains("ffmpeg.exe") && ffmpegpath.Text.Substring(ffmpegpath.Text.LastIndexOf('\\') + 1) == "ffmpeg.exe")
-                            {
-                                Execute(ffmpegpath.Text, $"-y -i \"{file}\" -preset ultrafast \"{outputFile}\"");
-
-                            }
-                            else
-                            {
-                                logFailed("ffmpeg not found.\n");
-                                progressBar1.Value = progressBar1.Maximum;
-                                progressBar1.ForeColor = Color.Red;
-                                progressBar1.BackColor = Color.Red;
-                                dublicateSafe = true;
-                                break;
-                            }
-                                
-                        }
-
-
-                        if (System.IO.File.Exists(backupFile) && !dublicateSafe)
-                        {
-                            logFailed($"Couldn't move: {backupFile} Already exists\n");
-                        }
-                        else
-                        {
-                            System.IO.File.Move(file, backupFile);
-                        }
-
-                        if (!dublicateSafe)
-                            result++;
-                        
-                        progressBar1.PerformStep();
-                        Log.AppendText($"output: {outputFile}\n");
-                        Log.ScrollToCaret();
+                        outputFile = System.IO.Path.Combine(path, $"{filename}{CurrentSuffix.Text}{dubprotection}.{extension}");
                     }
-                    
+                    if (System.IO.File.Exists(backupFile))
+                    {
+                        backupFile = System.IO.Path.Combine(backUpPath, $"{filename}{CurrentSuffix.Text}{dubprotection}{oldFileExtension}");
+                    }
                 }
-                double averageResult = (double)(((double)result / files.Count()) * 100);
 
-                if (averageResult > 5)
-                    logFailed($"Failed to move {result}/{files.Count()} : {averageResult}%\n");
+                if (System.IO.File.Exists(outputFile))
+                {
+                    logFailed($"Couldn't convert: {item} Already exists\n");
+                    errorcode++;
+                    readyToMove = false;
+                    dublicateSafe = false;
+                }
                 else
-                    logSucces($"Moved {result}/{files.Count()} : {averageResult}%\n");
+                {
+
+                    if (ffmpegpath.Text.Contains("ffmpeg.exe") && ffmpegpath.Text.Substring(ffmpegpath.Text.LastIndexOf('\\') + 1) == "ffmpeg.exe")
+                    {
+                        Execute(ffmpegpath.Text, $"-y -i \"{item}\" -preset ultrafast \"{outputFile}\"");
+
+                    }
+                    else
+                    {
+                        logFailed("ffmpeg not found.\n");
+                        errorcode += 4;
+                        dublicateSafe = false;
+                        break;
+                    }
+                                
+                }
+
+
+                if (System.IO.File.Exists(backupFile) || !dublicateSafe || !readyToMove)
+                {
+                    logFailed($"Couldn't move: {backupFile} Allready exists\n");
+                    errorcode += 2;
+                }
+                else
+                {
+                    System.IO.File.Move(item, backupFile);
+                }
+
+                if (!dublicateSafe)
+                {
+                    result++;
+                }
+
+                        
+                progressBar1.PerformStep();
+                Log.AppendText($"output: {outputFile}\n");
+                Log.ScrollToCaret();
+
+                if(errorcode < 1)
+                {
+                    errorLog.Add($"Succesfully acted on {item}");
+                }
+                else
+                {
+                    errorLog.Add($"Couldn't act on {item} error {errorcode}");
+                }
+
+
+
+
 
             }
+            double averageResult = (double)(((double)result / files.Count()) * 100);
+
             CurrentFileLabel.Text = "Done";
+
+
+
+            string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
+            string newFolderPath = System.IO.Path.Combine(runPath, "Logs");
+            string errorLogFileName = $"Log{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}.txt";
+            // Check if the directory exists
+            if (!Directory.Exists(newFolderPath))
+            {
+                // If it doesn't exist, create it
+                Directory.CreateDirectory(newFolderPath);
+            }
+            string newFilePath = System.IO.Path.Combine(newFolderPath, errorLogFileName);
+
+            string errocodelegend = "Error code legend\r\n1. couldnt convert file allready exists\r\n2. couldnt move file allready exists\r\n3. couldnt move or convert files allready exists\r\n4. FFmpeg missing\r\n5. FFmpeg missing couldnt convert file allready exists\r\n6. FFmpeg missing move file allready exists\r\n7. FFmpeg missing couldnt move or convert files allready exists\r\n\r\n";
+            System.IO.File.AppendAllText(newFilePath, $"{errocodelegend}");
+
+            foreach(string line in errorLog)
+            {
+                System.IO.File.AppendAllText(newFilePath, line+"\n");
+            }
+
+
+            if (averageResult > 5)
+                logFailed($"Failed to convert. {files.Count() - result}/{files.Count()} : {averageResult}% failure rate\nOver 5% failure rate check {errorLogFileName}\n");
+            else
+                logSucces($"converted {files.Count() - result}/{files.Count()} : {averageResult}%\n");
         }
 
         private void ManualCheck_Click(object sender, EventArgs e)
@@ -556,7 +614,7 @@ namespace folderwatcherffmpeg
             {
                 string inputPath = path; // Replace with your path
                 string fullPath = System.IO.Path.GetFullPath(inputPath);
-                if (!Directory.Exists(fullPath))
+                if (!Directory.Exists(fullPath.Substring(0, fullPath.LastIndexOf('\\') + 1)))
                 {
                     throw new DirectoryNotFoundException("Path does not currently excists");
                 }

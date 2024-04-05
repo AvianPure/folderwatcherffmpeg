@@ -93,7 +93,10 @@
             this.SelectedFileTypes.Items.AddRange(new object[] {
             "Avif",
             "PNG",
-            "JPG"});
+            "JPG",
+            "JFIF",
+            "WEBP",
+            "BMP"});
             this.SelectedFileTypes.Location = new System.Drawing.Point(15, 211);
             this.SelectedFileTypes.Name = "SelectedFileTypes";
             this.SelectedFileTypes.Size = new System.Drawing.Size(120, 34);
