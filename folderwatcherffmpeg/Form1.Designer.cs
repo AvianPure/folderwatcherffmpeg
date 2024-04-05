@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.Types = new System.Windows.Forms.Label();
             this.SelectedFileTypes = new System.Windows.Forms.CheckedListBox();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
@@ -64,6 +65,13 @@
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.StartOnBoot = new System.Windows.Forms.CheckBox();
+            this.Defaults = new System.Windows.Forms.Button();
+            this.SetSuffixBtn = new System.Windows.Forms.Button();
+            this.Currentsuffixlabel = new System.Windows.Forms.Label();
+            this.PrefixTXT = new System.Windows.Forms.TextBox();
+            this.RandomPreFix = new System.Windows.Forms.Button();
+            this.CurrentSuffix = new System.Windows.Forms.Label();
+            this.DubCheck = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.Hours)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.minutes)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.seconds)).BeginInit();
@@ -94,7 +102,7 @@
             // 
             this.progressBar1.Location = new System.Drawing.Point(13, 415);
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(775, 23);
+            this.progressBar1.Size = new System.Drawing.Size(810, 23);
             this.progressBar1.TabIndex = 2;
             // 
             // LogLabel
@@ -232,7 +240,7 @@
             // 
             // SaveBTN
             // 
-            this.SaveBTN.Location = new System.Drawing.Point(681, 12);
+            this.SaveBTN.Location = new System.Drawing.Point(710, 12);
             this.SaveBTN.Name = "SaveBTN";
             this.SaveBTN.Size = new System.Drawing.Size(107, 23);
             this.SaveBTN.TabIndex = 16;
@@ -242,7 +250,7 @@
             // 
             // LoadBtn
             // 
-            this.LoadBtn.Location = new System.Drawing.Point(681, 42);
+            this.LoadBtn.Location = new System.Drawing.Point(710, 42);
             this.LoadBtn.Name = "LoadBtn";
             this.LoadBtn.Size = new System.Drawing.Size(107, 23);
             this.LoadBtn.TabIndex = 17;
@@ -255,7 +263,7 @@
             this.Log.Location = new System.Drawing.Point(12, 270);
             this.Log.Name = "Log";
             this.Log.ReadOnly = true;
-            this.Log.Size = new System.Drawing.Size(776, 113);
+            this.Log.Size = new System.Drawing.Size(811, 113);
             this.Log.TabIndex = 18;
             this.Log.Text = "";
             // 
@@ -399,18 +407,89 @@
             // StartOnBoot
             // 
             this.StartOnBoot.AutoSize = true;
-            this.StartOnBoot.Location = new System.Drawing.Point(661, 71);
+            this.StartOnBoot.Location = new System.Drawing.Point(690, 71);
             this.StartOnBoot.Name = "StartOnBoot";
             this.StartOnBoot.Size = new System.Drawing.Size(139, 17);
             this.StartOnBoot.TabIndex = 33;
             this.StartOnBoot.Text = "Start Watching On Start";
             this.StartOnBoot.UseVisualStyleBackColor = true;
             // 
+            // Defaults
+            // 
+            this.Defaults.Location = new System.Drawing.Point(597, 12);
+            this.Defaults.Name = "Defaults";
+            this.Defaults.Size = new System.Drawing.Size(107, 23);
+            this.Defaults.TabIndex = 34;
+            this.Defaults.Text = "Load Defaults";
+            this.Defaults.UseVisualStyleBackColor = true;
+            this.Defaults.Click += new System.EventHandler(this.Defaults_Click);
+            // 
+            // SetSuffixBtn
+            // 
+            this.SetSuffixBtn.Location = new System.Drawing.Point(522, 184);
+            this.SetSuffixBtn.Name = "SetSuffixBtn";
+            this.SetSuffixBtn.Size = new System.Drawing.Size(75, 23);
+            this.SetSuffixBtn.TabIndex = 35;
+            this.SetSuffixBtn.Text = "Set Suffix";
+            this.SetSuffixBtn.UseVisualStyleBackColor = true;
+            this.SetSuffixBtn.Click += new System.EventHandler(this.SetSuffixBtn_Click);
+            // 
+            // Currentsuffixlabel
+            // 
+            this.Currentsuffixlabel.AutoSize = true;
+            this.Currentsuffixlabel.Location = new System.Drawing.Point(519, 246);
+            this.Currentsuffixlabel.Name = "Currentsuffixlabel";
+            this.Currentsuffixlabel.Size = new System.Drawing.Size(73, 13);
+            this.Currentsuffixlabel.TabIndex = 36;
+            this.Currentsuffixlabel.Text = "Current Suffix:";
+            // 
+            // PrefixTXT
+            // 
+            this.PrefixTXT.Location = new System.Drawing.Point(522, 215);
+            this.PrefixTXT.Name = "PrefixTXT";
+            this.PrefixTXT.Size = new System.Drawing.Size(301, 20);
+            this.PrefixTXT.TabIndex = 37;
+            // 
+            // RandomPreFix
+            // 
+            this.RandomPreFix.Location = new System.Drawing.Point(603, 184);
+            this.RandomPreFix.Name = "RandomPreFix";
+            this.RandomPreFix.Size = new System.Drawing.Size(100, 23);
+            this.RandomPreFix.TabIndex = 38;
+            this.RandomPreFix.Text = "Randomize Suffix";
+            this.RandomPreFix.UseVisualStyleBackColor = true;
+            this.RandomPreFix.Click += new System.EventHandler(this.RandomPreFix_Click);
+            // 
+            // CurrentSuffix
+            // 
+            this.CurrentSuffix.AutoSize = true;
+            this.CurrentSuffix.Location = new System.Drawing.Point(596, 245);
+            this.CurrentSuffix.Name = "CurrentSuffix";
+            this.CurrentSuffix.Size = new System.Drawing.Size(0, 13);
+            this.CurrentSuffix.TabIndex = 39;
+            // 
+            // DubCheck
+            // 
+            this.DubCheck.AutoSize = true;
+            this.DubCheck.Location = new System.Drawing.Point(710, 187);
+            this.DubCheck.Name = "DubCheck";
+            this.DubCheck.Size = new System.Drawing.Size(122, 17);
+            this.DubCheck.TabIndex = 40;
+            this.DubCheck.Text = "Dublicate Protection";
+            this.DubCheck.UseVisualStyleBackColor = true;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(835, 450);
+            this.Controls.Add(this.DubCheck);
+            this.Controls.Add(this.CurrentSuffix);
+            this.Controls.Add(this.RandomPreFix);
+            this.Controls.Add(this.PrefixTXT);
+            this.Controls.Add(this.Currentsuffixlabel);
+            this.Controls.Add(this.SetSuffixBtn);
+            this.Controls.Add(this.Defaults);
             this.Controls.Add(this.StartOnBoot);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
@@ -445,6 +524,7 @@
             this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.SelectedFileTypes);
             this.Controls.Add(this.Types);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";
             this.Text = "Folder Watcher";
             ((System.ComponentModel.ISupportInitialize)(this.Hours)).EndInit();
@@ -492,6 +572,13 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.CheckBox StartOnBoot;
+        private System.Windows.Forms.Button Defaults;
+        private System.Windows.Forms.Button SetSuffixBtn;
+        private System.Windows.Forms.Label Currentsuffixlabel;
+        private System.Windows.Forms.TextBox PrefixTXT;
+        private System.Windows.Forms.Button RandomPreFix;
+        private System.Windows.Forms.Label CurrentSuffix;
+        private System.Windows.Forms.CheckBox DubCheck;
     }
 }
 

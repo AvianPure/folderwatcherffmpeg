@@ -1,15 +1,13 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Diagnostics;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using System.Drawing;
+using MS.WindowsAPICodePack.Internal;
+using static System.Net.WebRequestMethods;
+
 
 namespace folderwatcherffmpeg
 {
@@ -89,6 +87,7 @@ namespace folderwatcherffmpeg
 
         private void fileCheck()
         {
+            int result = 0;
             if (ffmpegpath.Text == "..." && WatchPath.Text == "..." && BackUpPath.Text == "..." && OutputPath.Text == "...")
             {
                 MessageBox.Show("Please ensure all settings have valid paths before proceeding.");
@@ -100,25 +99,80 @@ namespace folderwatcherffmpeg
             {
 
                 Console.WriteLine("Checking for " + item + " items in path " + WatchPath.Text);
-                progressBar1.Maximum = files.Count();
-                progressBar1.Value = 1;
-                progressBar1.Step = 1;
-                progressBar1.Minimum = 1;
+
+                if (files.Count() > 0)
+                {
+                    progressBar1.Maximum = files.Count();
+                    progressBar1.Value = 1;
+                    progressBar1.Step = 1;
+                    progressBar1.Minimum = 1;
+                }
+
                 foreach (var file in files)
                 {
                     CurrentFileLabel.Text = file;
                     if (file.ToLower().Contains("." + item.ToString().ToLower()))
                     {
-                        Console.WriteLine($"{file} {item}");
+                        bool dublicateSafe = true;
+
                         string path = OutputPath.Text;
                         string filename = Path.GetFileNameWithoutExtension(file);
-                        string oldFile = Path.GetFileName(file);
-                        Execute(ffmpegpath.Text, $"-y -i {file} -preset ultrafast {path}\\{filename}.{SelectedFileType.ToLower()}");
-                        File.Move(file, $"{BackUpPath.Text}\\{oldFile}");
-                        Log.AppendText($"output: {path}\\{filename}.{SelectedFileType.ToLower()}\n");
+                        string extension = SelectedFileType.ToLower();
+                        string outputFile = Path.Combine(path, $"{filename}{CurrentSuffix.Text}.{extension}");
+
+                        string oldFileExtension = Path.GetExtension(file);
+                        string backUpPath = BackUpPath.Text;
+                        string backupFile = Path.Combine(backUpPath, $"{filename}{CurrentSuffix.Text}.{oldFileExtension}");
+
+
+                        if (DubCheck.Checked == true)
+                        {
+                            string dubprotection = GenerateRandomString(10);
+                            if (System.IO.File.Exists(outputFile))
+                            {
+                               outputFile = Path.Combine(path, $"{filename}{CurrentSuffix.Text}{dubprotection}.{extension}");
+                            }
+                            if (System.IO.File.Exists(backupFile))
+                            {
+                                backupFile = Path.Combine(backUpPath, $"{filename}{CurrentSuffix.Text}{dubprotection}.{oldFileExtension}");
+                            }
+                        }
+
+                        if (System.IO.File.Exists(outputFile))
+                        {
+                            logFailed($"Couldn't convert: {file} Already exists\n");
+                            dublicateSafe = false;
+                        }
+                        else
+                        {
+                            Execute(ffmpegpath.Text, $"-y -i \"{file}\" -preset ultrafast \"{outputFile}\"");
+                        }
+
+
+                        if (System.IO.File.Exists(backupFile) && !dublicateSafe)
+                        {
+                            logFailed($"Couldn't move: {backupFile} Already exists\n");
+                        }
+                        else
+                        {
+                            System.IO.File.Move(file, backupFile);
+                        }
+
+                        if (!dublicateSafe)
+                            result++;
+                        
+                        progressBar1.PerformStep();
+                        Log.AppendText($"output: {outputFile}\n");
+                        Log.ScrollToCaret();
                     }
-                    progressBar1.PerformStep();
+                    
                 }
+                double averageResult = (double)(((double)result / files.Count()) * 100);
+
+                if (averageResult > 5)
+                    logFailed($"Failed to move {result}/{files.Count()} : {averageResult}%\n");
+                else
+                    logSucces($"Moved {result}/{files.Count()} : {averageResult}%\n");
 
             }
             CurrentFileLabel.Text = "Done";
@@ -148,15 +202,16 @@ namespace folderwatcherffmpeg
         private void button1_Click(object sender, EventArgs e)
         {
             bool foundmmpeg = false;
+            string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
             CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-            dialog.InitialDirectory = "C:\\Users";
+            dialog.InitialDirectory = runPath;
             dialog.IsFolderPicker = true;
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 string[] files = Directory.GetFiles(dialog.FileName);
                 foreach (string file in files)
                 {
-                    if (file.Contains("ffmpeg.exe"))
+                    if (file.Contains("ffmpeg.exe") && file.Substring(file.LastIndexOf('\\') + 1) == "ffmpeg.exe")
                     {
                         ffmpegpath.Text = file;
                         foundmmpeg = true;
@@ -166,6 +221,7 @@ namespace folderwatcherffmpeg
                 if(foundmmpeg== false)
                 {
                     MessageBox.Show("Error ffmpeg not found");
+                    logFailed("Error ffmpeg not found.\n");
                 }
                 
             }
@@ -173,8 +229,9 @@ namespace folderwatcherffmpeg
 
         private void FolderToWatchBtn_Click(object sender, EventArgs e)
         {
+            string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
             CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-            dialog.InitialDirectory = "C:\\Users";
+            dialog.InitialDirectory = runPath;
             dialog.IsFolderPicker = true;
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
@@ -197,9 +254,9 @@ namespace folderwatcherffmpeg
             string newFilePath = Path.Combine(newFolderPath, "Settings.txt");
 
             // Create a new text file with three lines of content
-            string content = $"ffmpeg:{ffmpegpath.Text}\nwatch:{WatchPath.Text}\ndefault:{SelectedFileType}\noutput:{OutputPath.Text}\nbackup:{BackUpPath.Text}\noutput:{OutputPath.Text}\nhour:{Hours.Value}\nminute:{minutes.Value}\nseconds:{seconds.Value}\nonboot:{StartOnBoot.Checked}";
-            File.WriteAllText(newFilePath, content);
-            Log.AppendText($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\nSettings saved" );
+            string content = $"ffmpeg:{ffmpegpath.Text}\nwatch:{WatchPath.Text}\ndefault:{SelectedFileType}\noutput:{OutputPath.Text}\nbackup:{BackUpPath.Text}\noutput:{OutputPath.Text}\nhour:{Hours.Value}\nminute:{minutes.Value}\nseconds:{seconds.Value}\nonboot:{StartOnBoot.Checked}\nsuffix:{Currentsuffixlabel.Text}\ndubprotection:{DubCheck.Checked}";
+            System.IO.File.WriteAllText(newFilePath, content);
+            Log.AppendText($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\nSettings saved\n" );
         }
 
         private void LoadBtn_Click(object sender, EventArgs e)
@@ -218,89 +275,91 @@ namespace folderwatcherffmpeg
             {
                 runcheck = false;
             }
-            if (!File.Exists(newFilePath))
+            if (!System.IO.File.Exists(newFilePath))
             {
                 runcheck = false;
             }
 
             if (runcheck)
             {
-                string[] lines = File.ReadAllLines(newFilePath);
+                string[] lines = System.IO.File.ReadAllLines(newFilePath);
 
                 // Print each line to the console
                 foreach (string line in lines)
                 {
-                    if (line.Contains("ffmpeg:"))
+                    switch (line)
                     {
-                        ffmpegpath.Text = line.Substring(line.IndexOf(':') + 1);
+                        case var _ when line.Contains("ffmpeg:"):
+                            ffmpegpath.Text = line.Substring(line.IndexOf(':') + 1);
+                            break;
+                        case var _ when line.Contains("suffix:"):
+                            CurrentSuffix.Text = line.Substring(line.IndexOf(':') + 1);
+                            break;
+                        case var _ when line.Contains("dubprotection:"):
+                            bool isDubProtectionEnabled = line.Substring(line.IndexOf(':') + 1).Equals("True", StringComparison.OrdinalIgnoreCase);
+                            DubCheck.Checked = isDubProtectionEnabled;
+                            break;
+                        case var _ when line.Contains("watch:"):
+                            WatchPath.Text = line.Substring(line.IndexOf(':') + 1);
+                            break;
+                        case var _ when line.Contains("default:"):
+                            SelectedFileType = line.Substring(line.IndexOf(':') + 1);
+                            switch (SelectedFileType)
+                            {
+                                case "PNG":
+                                    RBPNG.Checked = true;
+                                    break;
+                                case "JPG":
+                                    RBJPG.Checked = true;
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        case var _ when line.Contains("backup:"):
+                            BackUpPath.Text = line.Substring(line.IndexOf(':') + 1);
+                            break;
+                        case var _ when line.Contains("output:"):
+                            OutputPath.Text = line.Substring(line.IndexOf(':') + 1);
+                            break;
+                        case var _ when line.Contains("hour:"):
+                            Hours.Value = Int32.Parse(line.Substring(line.IndexOf(':') + 1));
+                            break;
+                        case var _ when line.Contains("minute:"):
+                            minutes.Value = Int32.Parse(line.Substring(line.IndexOf(':') + 1));
+                            break;
+                        case var _ when line.Contains("second:"):
+                            seconds.Value = Int32.Parse(line.Substring(line.IndexOf(':') + 1));
+                            break;
+                        case var _ when line.Contains("onboot:"):
+                            if (line.Substring(line.IndexOf(':') + 1) == "True")
+                            {
+                                StartOnBoot.Checked = true;
+                                StartBtn_Click(this, null);
+                            }
+                            else
+                            {
+                                StartOnBoot.Checked = false;
+                            }
+                            break;
+                        default:
+                            break;
                     }
-                    if (line.Contains("watch:"))
-                    {
-                        WatchPath.Text = line.Substring(line.IndexOf(':') + 1);
-                    }
-                    if (line.Contains("default:"))
-                    {
-                        SelectedFileType = line.Substring(line.IndexOf(':') + 1);
-                        switch (SelectedFileType)
-                        {
-                            case "PNG":
-                                RBPNG.Checked = true;
-                                break;
-                            case "JPG":
-                                RBJPG.Checked = true; 
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                    if (line.Contains("backup:"))
-                    {
-                        BackUpPath.Text = line.Substring(line.IndexOf(':') + 1);
-                    }
-                    if (line.Contains("output:"))
-                    {
-                        OutputPath.Text = line.Substring(line.IndexOf(':') + 1);
-                    }
-
-                    if (line.Contains("hour:"))
-                    {
-                        Hours.Value = Int32.Parse(line.Substring(line.IndexOf(':') + 1));
-                    }
-                    if (line.Contains("minute:"))
-                    {
-                        minutes.Value = Int32.Parse(line.Substring(line.IndexOf(':') + 1));
-                    }
-                    if (line.Contains("second:"))
-                    {
-                        seconds.Value = Int32.Parse(line.Substring(line.IndexOf(':') + 1));
-                    }
-                    if (line.Contains("onboot:"))
-                    {
-                        if(line.Substring(line.IndexOf(':') + 1) == "True")
-                        {
-                            StartOnBoot.Checked = true;
-                            StartBtn_Click(this, null);
-                        }
-                        else
-                        {
-                            StartOnBoot.Checked = false;
-                        }
-                        
-                    }
-
                 }
+
             }
             Log.AppendText($"Started {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\n");
             if (!runcheck)
-                Log.AppendText("No settings found.\n");
+                logFailed("No settings found.\n");
             else
-                Log.AppendText("Settings Loaded.\n");
+                logSucces("Settings Loaded.\n");
         }
 
         private void OutputBtn_Click(object sender, EventArgs e)
         {
+            string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
             CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-            dialog.InitialDirectory = "C:\\Users";
+            dialog.InitialDirectory = runPath;
             dialog.IsFolderPicker = true;
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
@@ -310,8 +369,9 @@ namespace folderwatcherffmpeg
 
         private void MoveBtn_Click(object sender, EventArgs e)
         {
+            string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
             CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-            dialog.InitialDirectory = "C:\\Users";
+            dialog.InitialDirectory = runPath;
             dialog.IsFolderPicker = true;
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
@@ -323,6 +383,92 @@ namespace folderwatcherffmpeg
         {
 
         }
+
+
+        private void logFailed(string LogMessage)
+        {
+            // Assuming you have a RichTextBox named "Log"
+            Log.SelectionStart = Log.TextLength; // Set the selection start to the end of the text
+            Log.SelectionLength = 0; // Set the selection length to zero (no selection)
+            Log.SelectionColor = Color.Red; // Set the color to red
+            Log.AppendText(LogMessage);
+            Log.SelectionColor = Log.ForeColor; // Reset the color to the default (optional)
+            Log.ScrollToCaret();
+        }
+        private void logSucces(string LogMessage)
+        {
+            // Assuming you have a RichTextBox named "Log"
+            Log.SelectionStart = Log.TextLength; // Set the selection start to the end of the text
+            Log.SelectionLength = 0; // Set the selection length to zero (no selection)
+            Log.SelectionColor = Color.Blue; // Set the color to red
+            Log.AppendText(LogMessage);
+            Log.SelectionColor = Log.ForeColor; // Reset the color to the default (optional)
+            Log.ScrollToCaret();
+        }
+        private void Defaults_Click(object sender, EventArgs e)
+        {
+            string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
+            bool foundmmpeg = false;
+
+            string[] files = Directory.GetFiles(runPath);
+            foreach (string file in files)
+            {
+                if (file.Contains("ffmpeg.exe") && file.Substring(file.LastIndexOf('\\') + 1) == "ffmpeg.exe")
+                {
+                    ffmpegpath.Text = file;
+                    foundmmpeg = true;
+                }
+                Console.WriteLine($"{file}");
+            }
+            if (foundmmpeg == false)
+            {
+                MessageBox.Show("Error ffmpeg not found");
+            }
+
+            string newFolderPath = Path.Combine(runPath, "backup");
+            if (!Directory.Exists(newFolderPath))
+            {
+                // If it doesn't exist, create it
+                Directory.CreateDirectory(newFolderPath);
+            }
+            BackUpPath.Text = newFolderPath;
+
+            newFolderPath = Path.Combine(runPath, "sampledata");
+            if (!Directory.Exists(newFolderPath))
+            {
+                // If it doesn't exist, create it
+                Directory.CreateDirectory(newFolderPath);
+            }
+            WatchPath.Text = newFolderPath;
+
+            newFolderPath = Path.Combine(runPath, "output");
+            if (!Directory.Exists(newFolderPath))
+            {
+                // If it doesn't exist, create it
+                Directory.CreateDirectory(newFolderPath);
+            }
+            OutputPath.Text = newFolderPath;
+
+        }
+
+        private void RandomPreFix_Click(object sender, EventArgs e)
+        {
+            PrefixTXT.Text = GenerateRandomString(5);
+        }
+
+        public static string GenerateRandomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            Random random = new Random();
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        private void SetSuffixBtn_Click(object sender, EventArgs e)
+        {
+            CurrentSuffix.Text = PrefixTXT.Text;
+        }
         //E:\ffmpeg-2024-02-15-git-a2cfd6062c-essentials_build\bin\ffmpeg.exe -i input.avif -preset ultrafast output.jpg
     }
 }
+
