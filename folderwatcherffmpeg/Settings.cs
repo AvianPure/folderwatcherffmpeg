@@ -27,6 +27,8 @@ namespace folderwatcherffmpeg
         public bool StartOnBoot { get; set; }
         public string[] fileTypes { get; set; }
 
+        public List<Log> logs = new List<Log>();
+
         public void LoadSettings()
         {
             string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
@@ -117,16 +119,15 @@ namespace folderwatcherffmpeg
                 GC.Collect();
 
             }
-            //TODO
-            /*
-            Log.AppendText($"Started {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\n");
+
+            logs.Add(new Log { Type = 2, Message = $"Started {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\n" });
             if (!runcheck)
-                logFailed("No settings found.\n");
+                logs.Add(new Log { Type = 0, Message = "No settings found.\n" });
             else if (!loadSucces)
-                logFailed("Some settings failed to load.\n");
+                logs.Add(new Log { Type = 0, Message = "Some settings failed to load.\n" });
             else
-                logSucces("Settings Loaded.\n");
-            */
+                logs.Add(new Log { Type = 1, Message = "Settings Loaded.\n" });
+
         }
 
 
@@ -144,8 +145,8 @@ namespace folderwatcherffmpeg
             }
             catch (Exception ex)
             {
-                //TODO
-                //logFailed($"Invalid path {path}: {ex.Message}\n");
+                logs.Add(new Log { Type = 0, Message = $"Invalid path {path}: {ex.Message}\n" });
+
                 loadSucces = false;
                 path = "";
             }
@@ -164,5 +165,11 @@ namespace folderwatcherffmpeg
             return cleanedPath;
         }
 
+    }
+
+    public class Log
+    {
+        public int Type { get; set; } // Type is either 0 or 1
+        public string Message { get; set; }
     }
 }

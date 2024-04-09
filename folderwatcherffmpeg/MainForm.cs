@@ -1,7 +1,6 @@
-﻿using Microsoft.WindowsAPICodePack.Dialogs;
-using System;
+﻿using System;
 using System.Collections.Generic;
-    using System.Diagnostics;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -301,19 +300,10 @@ namespace folderwatcherffmpeg
 
         private void LoadSettings()
         {
-            Log.AppendText($"Started {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\n");
-
             Hours.Value = appSettings.Hours;
             minutes.Value = appSettings.minutes;
             seconds.Value = appSettings.seconds;
-
-
-            if (appSettings.ffmpegpath == null)
-                logFailed("No settings found.\n");
-            else if (!loadSucces)
-                logFailed("Some settings failed to load.\n");
-            else
-                logSucces("Settings Loaded.\n");
+            translateLog();
         }
 
 
@@ -357,7 +347,7 @@ namespace folderwatcherffmpeg
         }
 
 
-        private void button2_Click(object sender, EventArgs e)
+        private void openSettigns(object sender, EventArgs e)
         {
             SettingsForm form2 = new SettingsForm(appSettings); // Pass appSettings to SettingsForm
             form2.FormClosed += SettingsCLosed;
@@ -375,9 +365,27 @@ namespace folderwatcherffmpeg
 
         }
 
-        private void button3_Click(object sender, EventArgs e)
+        private void translateLog()
         {
-            label5.Text = appSettings.RBJPG.ToString();
+            foreach (var log in appSettings.logs)
+            {
+                switch (log.Type)
+                {
+                    case 0:
+                        logFailed(log.Message);
+                        break;
+                    case 1:
+                        logSucces(log.Message);
+                        break;
+                    case 2:
+                        Log.AppendText(log.Message);
+                        break;
+                    default:
+                        logFailed("Logs failed to load");
+                        break;
+                }
+            }
+            appSettings.logs.Clear();
         }
 
         //E:\ffmpeg-2024-02-15-git-a2cfd6062c-essentials_build\bin\ffmpeg.exe -i input.avif -preset ultrafast output.jpg

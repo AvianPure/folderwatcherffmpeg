@@ -9,8 +9,11 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 using System.Windows.Forms;
-
+//new logging system
+//appSettings.logs.Add(new Log { Type = 0, Message = "message" });
+//0 red 1 blue 2 nocolour
 namespace folderwatcherffmpeg
 {
     public partial class SettingsForm : Form
@@ -29,6 +32,10 @@ namespace folderwatcherffmpeg
 
         private void setup()
         {
+            if(appSettings == null)
+            {
+                loadDefaults();
+            }
             ffmpegpath.Text = appSettings.ffmpegpath;
             WatchPath.Text = appSettings.WatchPath;
             OutputPath.Text = appSettings.OutputPath;
@@ -40,6 +47,8 @@ namespace folderwatcherffmpeg
             Hours.Value = appSettings.Hours;
             seconds.Value   = appSettings.seconds;
             minutes.Value = appSettings.minutes;
+            if (appSettings.fileTypes == null)
+                return;
             foreach (string fileType in appSettings.fileTypes)
             {
                 for (int i = 0; i < SelectedFileTypes.Items.Count; i++)
@@ -83,13 +92,27 @@ namespace folderwatcherffmpeg
                 $"{OutputPath.Text}\nhour:{Hours.Value}\nminute:{minutes.Value}\nseconds:" +
                 $"{seconds.Value}\nonboot:{StartOnBoot.Checked}\nsuffix:{CurrentSuffix.Text}\ndubprotection:" +
                 $"{DubCheck.Checked}\n";
+            try
+            {
+                List<string> selectedFileTypesList = new List<string>();
 
-            string selectedTypesCollection = $"filetypes:{string.Join(",", appSettings.fileTypes)}\n";
+                foreach (var item in SelectedFileTypes.CheckedItems)
+                {
+                    Console.WriteLine(item);
+                    selectedFileTypesList.Add(item.ToString());
+                }
+                string selectedTypesCollection = $"filetypes:{string.Join(",", selectedFileTypesList)}\n";
+
+
             System.IO.File.WriteAllText(newFilePath, $"{content}{selectedTypesCollection}");
 
-            //TODO
-            //logSucces($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\nSettings saved\n");
-
+            appSettings.logs.Add(new Log { Type = 1, Message = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\nSettings saved\n" });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"makes sure to check items to watch for before saving.\nsaving failed.\n{ex}");
+                return;
+            }
             GC.Collect();
             appSettings.LoadSettings();
             setup();
@@ -128,8 +151,7 @@ namespace folderwatcherffmpeg
 
             return cleanedPath;
         }
-
-        private void Defaults_Click(object sender, EventArgs e)
+        private void loadDefaults()
         {
             Hours.Value = 0;
             minutes.Value = 0;
@@ -152,12 +174,11 @@ namespace folderwatcherffmpeg
                     ffmpegpath.Text = file;
                     foundmmpeg = true;
                 }
-                Console.WriteLine($"{file}");
             }
             if (foundmmpeg == false)
             {
                 MessageBox.Show("Error ffmpeg not found");
-                //logFailed("Error ffmpeg not found\n");
+                appSettings.logs.Add(new Log { Type = 0, Message = "Error ffmpeg not found\n" });
                 ffmpegpath.Text = "";
             }
 
@@ -185,8 +206,12 @@ namespace folderwatcherffmpeg
             }
             OutputPath.Text = newFolderPath;
 
-            //logSucces("Succesfully reseted settings to default\n");
+            appSettings.logs.Add(new Log { Type = 1, Message = "Succesfully reseted settings to default\n" });
 
+        }
+        private void Defaults_Click(object sender, EventArgs e)
+        {
+            loadDefaults();
         }
 
         private void Apply_Click(object sender, EventArgs e)
@@ -236,6 +261,7 @@ namespace folderwatcherffmpeg
                 if (foundmmpeg == false)
                 {
                     MessageBox.Show("Error ffmpeg not found");
+                    appSettings.logs.Add(new Log { Type = 0, Message = "Error FFmpeg not found.\n" });
                 }
 
             }
