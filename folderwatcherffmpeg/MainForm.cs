@@ -19,6 +19,7 @@ namespace folderwatcherffmpeg
         {
             InitializeComponent();
             appSettings = new Settings();
+            appSettings.LoadSettings();
             LoadSettings();
 
 
@@ -300,10 +301,14 @@ namespace folderwatcherffmpeg
 
         private void LoadSettings()
         {
-            appSettings.LoadSettings();
             Log.AppendText($"Started {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}\n");
 
-            if (appSettings.ffmpegpath != null)
+            Hours.Value = appSettings.Hours;
+            minutes.Value = appSettings.minutes;
+            seconds.Value = appSettings.seconds;
+
+
+            if (appSettings.ffmpegpath == null)
                 logFailed("No settings found.\n");
             else if (!loadSucces)
                 logFailed("Some settings failed to load.\n");
@@ -366,6 +371,8 @@ namespace folderwatcherffmpeg
 
             // Load the settings
             LoadSettings();
+
+
         }
 
         private void button3_Click(object sender, EventArgs e)

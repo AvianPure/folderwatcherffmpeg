@@ -36,6 +36,9 @@ namespace folderwatcherffmpeg
             PrefixTXT.Text = appSettings.PrefixTXT;
             DubCheck.Checked = appSettings.DubCheck;
             StartOnBoot.Checked = appSettings.StartOnBoot;
+            Hours.Value = appSettings.Hours;
+            seconds.Value   = appSettings.seconds;
+            minutes.Value = appSettings.minutes;
             foreach (string fileType in appSettings.fileTypes)
             {
                 for (int i = 0; i < SelectedFileTypes.Items.Count; i++)
@@ -47,11 +50,6 @@ namespace folderwatcherffmpeg
                     }
                 }
             }
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            appSettings.LoadSettings();
         }
 
 
@@ -81,8 +79,8 @@ namespace folderwatcherffmpeg
 
             string content = $"ffmpeg:{ffmpegpath.Text}\nwatch:{WatchPath.Text}\ndefault:" +
                 $"{SelectedFileType}\noutput:{OutputPath.Text}\nbackup:{BackUpPath.Text}\noutput:" +
-                $"{OutputPath.Text}\nhour:{appSettings.Hours}\nminute:{appSettings.minutes}\nseconds:" +
-                $"{appSettings.seconds}\nonboot:{StartOnBoot.Checked}\nsuffix:{CurrentSuffix.Text}\ndubprotection:" +
+                $"{OutputPath.Text}\nhour:{Hours.Value}\nminute:{minutes.Value}\nseconds:" +
+                $"{seconds.Value}\nonboot:{StartOnBoot.Checked}\nsuffix:{CurrentSuffix.Text}\ndubprotection:" +
                 $"{DubCheck.Checked}\n";
 
             string selectedTypesCollection = $"filetypes:{string.Join(",", appSettings.fileTypes)}\n";
@@ -128,6 +126,92 @@ namespace folderwatcherffmpeg
             cleanedPath = Regex.Replace(cleanedPath, @"[^\w\d\s-]", "_");
 
             return cleanedPath;
+        }
+
+        private void Defaults_Click(object sender, EventArgs e)
+        {
+            Hours.Value = 0;
+            minutes.Value = 0;
+            seconds.Value = 0;
+            CurrentSuffix.Text = "";
+            PrefixTXT.Text = "";
+            //timerStop();
+            StartOnBoot.Checked = false;
+            string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
+            bool foundmmpeg = false;
+            for (int i = 0; i < SelectedFileTypes.Items.Count; i++)
+            {
+                SelectedFileTypes.SetItemChecked(i, false);
+            }
+            string[] files = Directory.GetFiles(runPath);
+            foreach (string file in files)
+            {
+                if (file.Contains("ffmpeg.exe") && file.Substring(file.LastIndexOf('\\') + 1) == "ffmpeg.exe")
+                {
+                    ffmpegpath.Text = file;
+                    foundmmpeg = true;
+                }
+                Console.WriteLine($"{file}");
+            }
+            if (foundmmpeg == false)
+            {
+                MessageBox.Show("Error ffmpeg not found");
+                //logFailed("Error ffmpeg not found\n");
+                ffmpegpath.Text = "";
+            }
+
+            string newFolderPath = System.IO.Path.Combine(runPath, "backup");
+            if (!Directory.Exists(newFolderPath))
+            {
+                // If it doesn't exist, create it
+                Directory.CreateDirectory(newFolderPath);
+            }
+            BackUpPath.Text = newFolderPath;
+
+            newFolderPath = System.IO.Path.Combine(runPath, "sampledata");
+            if (!Directory.Exists(newFolderPath))
+            {
+                // If it doesn't exist, create it
+                Directory.CreateDirectory(newFolderPath);
+            }
+            WatchPath.Text = newFolderPath;
+
+            newFolderPath = System.IO.Path.Combine(runPath, "output");
+            if (!Directory.Exists(newFolderPath))
+            {
+                // If it doesn't exist, create it
+                Directory.CreateDirectory(newFolderPath);
+            }
+            OutputPath.Text = newFolderPath;
+
+            //logSucces("Succesfully reseted settings to default\n");
+
+        }
+
+        private void Apply_Click(object sender, EventArgs e)
+        {
+            appSettings.ffmpegpath = ffmpegpath.Text;
+            appSettings.WatchPath = WatchPath.Text;
+            appSettings.OutputPath = OutputPath.Text;
+            appSettings.BackUpPath = BackUpPath.Text;
+            appSettings.CurrentSuffix = CurrentSuffix.Text;
+            appSettings.PrefixTXT = PrefixTXT.Text;
+            appSettings.DubCheck = DubCheck.Checked;
+            appSettings.StartOnBoot = StartOnBoot.Checked;
+            appSettings.Hours = (int)Hours.Value;
+            appSettings.minutes = (int)minutes.Value;
+            appSettings.seconds = (int)seconds.Value;
+            foreach (string fileType in appSettings.fileTypes)
+            {
+                for (int i = 0; i < SelectedFileTypes.Items.Count; i++)
+                {
+                    if (SelectedFileTypes.Items[i].ToString() == fileType)
+                    {
+                        SelectedFileTypes.SetItemChecked(i, true);
+                        break;
+                    }
+                }
+            }
         }
     }
 }

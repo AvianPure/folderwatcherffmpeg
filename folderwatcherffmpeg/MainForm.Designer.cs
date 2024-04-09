@@ -83,7 +83,7 @@
             // 
             // StartBtn
             // 
-            this.StartBtn.Location = new System.Drawing.Point(281, 41);
+            this.StartBtn.Location = new System.Drawing.Point(205, 41);
             this.StartBtn.Name = "StartBtn";
             this.StartBtn.Size = new System.Drawing.Size(87, 23);
             this.StartBtn.TabIndex = 5;
@@ -99,7 +99,7 @@
             // Timer
             // 
             this.Timer.AutoSize = true;
-            this.Timer.Location = new System.Drawing.Point(281, 71);
+            this.Timer.Location = new System.Drawing.Point(205, 71);
             this.Timer.Name = "Timer";
             this.Timer.Size = new System.Drawing.Size(49, 13);
             this.Timer.TabIndex = 6;
@@ -107,7 +107,7 @@
             // 
             // ManualCheck
             // 
-            this.ManualCheck.Location = new System.Drawing.Point(281, 9);
+            this.ManualCheck.Location = new System.Drawing.Point(205, 9);
             this.ManualCheck.Name = "ManualCheck";
             this.ManualCheck.Size = new System.Drawing.Size(87, 23);
             this.ManualCheck.TabIndex = 7;
@@ -176,7 +176,7 @@
             0,
             0});
             this.Hours.Name = "Hours";
-            this.Hours.Size = new System.Drawing.Size(120, 20);
+            this.Hours.Size = new System.Drawing.Size(44, 20);
             this.Hours.TabIndex = 27;
             // 
             // minutes
@@ -188,7 +188,7 @@
             0,
             0});
             this.minutes.Name = "minutes";
-            this.minutes.Size = new System.Drawing.Size(120, 20);
+            this.minutes.Size = new System.Drawing.Size(44, 20);
             this.minutes.TabIndex = 28;
             // 
             // seconds
@@ -200,7 +200,7 @@
             0,
             0});
             this.seconds.Name = "seconds";
-            this.seconds.Size = new System.Drawing.Size(120, 20);
+            this.seconds.Size = new System.Drawing.Size(44, 20);
             this.seconds.TabIndex = 29;
             // 
             // label2

@@ -53,6 +53,15 @@
             this.LoadBtn = new System.Windows.Forms.Button();
             this.SaveBTN = new System.Windows.Forms.Button();
             this.Apply = new System.Windows.Forms.Button();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.seconds = new System.Windows.Forms.NumericUpDown();
+            this.minutes = new System.Windows.Forms.NumericUpDown();
+            this.Hours = new System.Windows.Forms.NumericUpDown();
+            ((System.ComponentModel.ISupportInitialize)(this.seconds)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.minutes)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Hours)).BeginInit();
             this.SuspendLayout();
             // 
             // BackupLabel
@@ -156,7 +165,7 @@
             // BackUpPath
             // 
             this.BackUpPath.AutoSize = true;
-            this.BackUpPath.Location = new System.Drawing.Point(105, 300);
+            this.BackUpPath.Location = new System.Drawing.Point(98, 300);
             this.BackUpPath.Name = "BackUpPath";
             this.BackUpPath.Size = new System.Drawing.Size(16, 13);
             this.BackUpPath.TabIndex = 38;
@@ -165,7 +174,7 @@
             // OutputPath
             // 
             this.OutputPath.AutoSize = true;
-            this.OutputPath.Location = new System.Drawing.Point(105, 256);
+            this.OutputPath.Location = new System.Drawing.Point(98, 256);
             this.OutputPath.Name = "OutputPath";
             this.OutputPath.Size = new System.Drawing.Size(16, 13);
             this.OutputPath.TabIndex = 37;
@@ -174,7 +183,7 @@
             // WatchPath
             // 
             this.WatchPath.AutoSize = true;
-            this.WatchPath.Location = new System.Drawing.Point(105, 214);
+            this.WatchPath.Location = new System.Drawing.Point(98, 214);
             this.WatchPath.Name = "WatchPath";
             this.WatchPath.Size = new System.Drawing.Size(16, 13);
             this.WatchPath.TabIndex = 36;
@@ -183,7 +192,7 @@
             // ffmpegpath
             // 
             this.ffmpegpath.AutoSize = true;
-            this.ffmpegpath.Location = new System.Drawing.Point(105, 167);
+            this.ffmpegpath.Location = new System.Drawing.Point(98, 167);
             this.ffmpegpath.Name = "ffmpegpath";
             this.ffmpegpath.Size = new System.Drawing.Size(16, 13);
             this.ffmpegpath.TabIndex = 35;
@@ -261,6 +270,7 @@
             this.Defaults.TabIndex = 50;
             this.Defaults.Text = "Load Defaults";
             this.Defaults.UseVisualStyleBackColor = true;
+            this.Defaults.Click += new System.EventHandler(this.Defaults_Click);
             // 
             // LoadBtn
             // 
@@ -290,6 +300,70 @@
             this.Apply.TabIndex = 51;
             this.Apply.Text = "Apply Settings";
             this.Apply.UseVisualStyleBackColor = true;
+            this.Apply.Click += new System.EventHandler(this.Apply_Click);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(332, 100);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(49, 13);
+            this.label4.TabIndex = 57;
+            this.label4.Text = "Seconds";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(337, 72);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(44, 13);
+            this.label3.TabIndex = 56;
+            this.label3.Text = "Minutes";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(346, 43);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(35, 13);
+            this.label2.TabIndex = 55;
+            this.label2.Text = "Hours";
+            // 
+            // seconds
+            // 
+            this.seconds.Location = new System.Drawing.Point(387, 98);
+            this.seconds.Maximum = new decimal(new int[] {
+            60,
+            0,
+            0,
+            0});
+            this.seconds.Name = "seconds";
+            this.seconds.Size = new System.Drawing.Size(39, 20);
+            this.seconds.TabIndex = 54;
+            // 
+            // minutes
+            // 
+            this.minutes.Location = new System.Drawing.Point(387, 70);
+            this.minutes.Maximum = new decimal(new int[] {
+            60,
+            0,
+            0,
+            0});
+            this.minutes.Name = "minutes";
+            this.minutes.Size = new System.Drawing.Size(39, 20);
+            this.minutes.TabIndex = 53;
+            // 
+            // Hours
+            // 
+            this.Hours.Location = new System.Drawing.Point(387, 41);
+            this.Hours.Maximum = new decimal(new int[] {
+            24,
+            0,
+            0,
+            0});
+            this.Hours.Name = "Hours";
+            this.Hours.Size = new System.Drawing.Size(39, 20);
+            this.Hours.TabIndex = 52;
             // 
             // SettingsForm
             // 
@@ -297,6 +371,12 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(599, 325);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.seconds);
+            this.Controls.Add(this.minutes);
+            this.Controls.Add(this.Hours);
             this.Controls.Add(this.Apply);
             this.Controls.Add(this.Defaults);
             this.Controls.Add(this.LoadBtn);
@@ -324,6 +404,9 @@
             this.Controls.Add(this.Types);
             this.Name = "SettingsForm";
             this.Text = "SettingsForm";
+            ((System.ComponentModel.ISupportInitialize)(this.seconds)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.minutes)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Hours)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -355,5 +438,11 @@
         private System.Windows.Forms.Button LoadBtn;
         private System.Windows.Forms.Button SaveBTN;
         private System.Windows.Forms.Button Apply;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.NumericUpDown seconds;
+        private System.Windows.Forms.NumericUpDown minutes;
+        private System.Windows.Forms.NumericUpDown Hours;
     }
 }
