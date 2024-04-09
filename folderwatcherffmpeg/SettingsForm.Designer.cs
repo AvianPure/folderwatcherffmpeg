@@ -81,6 +81,7 @@
             this.MoveBtn.TabIndex = 33;
             this.MoveBtn.Text = "Select Backup Folder";
             this.MoveBtn.UseVisualStyleBackColor = true;
+            this.MoveBtn.Click += new System.EventHandler(this.backUpPath_Click);
             // 
             // OutputLabel
             // 
@@ -99,6 +100,7 @@
             this.OutputBtn.TabIndex = 31;
             this.OutputBtn.Text = "Select Output Path";
             this.OutputBtn.UseVisualStyleBackColor = true;
+            this.OutputBtn.Click += new System.EventHandler(this.OutputBtn_Click);
             // 
             // Watch
             // 
@@ -117,6 +119,7 @@
             this.FolderToWatchBtn.TabIndex = 29;
             this.FolderToWatchBtn.Text = "Select Folder To Watch";
             this.FolderToWatchBtn.UseVisualStyleBackColor = true;
+            this.FolderToWatchBtn.Click += new System.EventHandler(this.FolderToWatchBtn_Click);
             // 
             // label1
             // 
@@ -135,6 +138,7 @@
             this.button3.TabIndex = 27;
             this.button3.Text = "Select ffmpeg folder";
             this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.ffmpegpath_BtnCLick);
             // 
             // SelectedFileTypes
             // 

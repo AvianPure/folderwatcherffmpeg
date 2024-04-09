@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.WindowsAPICodePack.Dialogs;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -211,6 +212,68 @@ namespace folderwatcherffmpeg
                         break;
                     }
                 }
+            }
+        }
+
+        private void ffmpegpath_BtnCLick(object sender, EventArgs e)
+        {
+            bool foundmmpeg = false;
+            string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.InitialDirectory = runPath;
+            dialog.IsFolderPicker = true;
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                string[] files = Directory.GetFiles(dialog.FileName);
+                foreach (string file in files)
+                {
+                    if (file.Contains("ffmpeg.exe") && file.Substring(file.LastIndexOf('\\') + 1) == "ffmpeg.exe")
+                    {
+                        ffmpegpath.Text = file;
+                        foundmmpeg = true;
+                    }
+                }
+                if (foundmmpeg == false)
+                {
+                    MessageBox.Show("Error ffmpeg not found");
+                }
+
+            }
+        }
+
+        private void FolderToWatchBtn_Click(object sender, EventArgs e)
+        {
+            string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.InitialDirectory = runPath;
+            dialog.IsFolderPicker = true;
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                WatchPath.Text = dialog.FileName;
+            }
+        }
+
+        private void OutputBtn_Click(object sender, EventArgs e)
+        {
+            string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.InitialDirectory = runPath;
+            dialog.IsFolderPicker = true;
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                OutputPath.Text = dialog.FileName;
+            }
+        }
+
+        private void backUpPath_Click(object sender, EventArgs e)
+        {
+            string runPath = System.AppDomain.CurrentDomain.BaseDirectory;
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.InitialDirectory = runPath;
+            dialog.IsFolderPicker = true;
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                BackUpPath.Text = dialog.FileName;
             }
         }
     }
